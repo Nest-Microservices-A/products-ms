@@ -1,13 +1,9 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  OnModuleInit,
-} from '@nestjs/common';
+import { HttpStatus, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { PrismaClient, Product } from '@prisma/client';
 import { PaginationDto } from 'src/common';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class ProductsService extends PrismaClient implements OnModuleInit {
@@ -18,71 +14,111 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     this.logger.log('Connected to database');
   }
   create(createProductDto: CreateProductDto): Promise<Product> {
-    return this.product.create({
-      data: createProductDto,
-    });
+    try {
+      return this.product.create({
+        data: createProductDto,
+      });
+    } catch (error) {
+      throw new RpcException({
+        message: 'Error creating product: ' + error.message,
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      });
+    }
   }
 
   async findAll(paginationDto: PaginationDto) {
-    const { page, limit } = paginationDto;
+    try {
+      const { page, limit } = paginationDto;
 
-    const totalPage = await this.product.count({ where: { available: true } });
-    const lastPage = Math.ceil(totalPage / limit);
-
-    return {
-      data: await this.product.findMany({
-        skip: (page - 1) * limit,
-        take: limit,
+      const totalPage = await this.product.count({
         where: { available: true },
-      }),
-      meta: {
-        total: totalPage,
-        page: page,
-        lastPage: lastPage,
-      },
-    };
+      });
+      const lastPage = Math.ceil(totalPage / limit);
+
+      return {
+        data: await this.product.findMany({
+          skip: (page - 1) * limit,
+          take: limit,
+          where: { available: true },
+        }),
+        meta: {
+          total: totalPage,
+          page: page,
+          lastPage: lastPage,
+        },
+      };
+    } catch (error) {
+      throw new RpcException({
+        message: 'Error finding all products: ' + error.message,
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      });
+    }
   }
 
   async findOne(id: number): Promise<Product> {
-    const product = await this.product.findFirst({
-      where: {
-        id,
-      },
-    });
+    try {
+      const product = await this.product.findFirst({
+        where: {
+          id,
+        },
+      });
 
-    if (!product) {
-      throw new NotFoundException(`No product found for id #${id}`);
+      if (!product) {
+        throw new RpcException({
+          message: `Product with id #${id} not found`,
+          status: HttpStatus.BAD_REQUEST,
+        });
+      }
+
+      return product;
+    } catch (error) {
+      throw new RpcException({
+        message: 'Error finding one product: ' + error.message,
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      });
     }
-
-    return product;
   }
 
   async update(
     id: number,
     updateProductDto: UpdateProductDto,
   ): Promise<Product> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { id: _, ...updateProductDtoWithoutId } = updateProductDto;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id: _, ...updateProductDtoWithoutId } = updateProductDto;
 
-    await this.findOne(id);
+      await this.findOne(id);
 
-    return this.product.update({
-      where: {
-        id,
-        available: true,
-      },
-      data: updateProductDtoWithoutId,
-    });
+      return this.product.update({
+        where: {
+          id,
+          available: true,
+        },
+        data: updateProductDtoWithoutId,
+      });
+    } catch (error) {
+      throw new RpcException({
+        message: 'Error updating product: ' + error.message,
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      });
+    }
   }
 
   async remove(id: number): Promise<Product> {
-    await this.findOne(id);
+    try {
+      await this.findOne(id);
 
-    return await this.product.update({
-      where: {
-        id,
-      },
-      data: { available: false },
-    });
+      return await this.product.update({
+        where: {
+          id,
+        },
+        data: { available: false },
+      });
+    } catch (error) {
+      throw new RpcException({
+        message: 'Error removing product: ' + error.message,
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+      });
+    }
   }
 }
