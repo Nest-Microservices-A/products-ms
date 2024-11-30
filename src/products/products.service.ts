@@ -60,6 +60,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
       const product = await this.product.findFirst({
         where: {
           id,
+          available: true,
         },
       });
 
