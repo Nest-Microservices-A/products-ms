@@ -21,7 +21,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     } catch (error) {
       throw new RpcException({
         message: 'Error creating product: ' + error.message,
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: error?.error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
       });
     }
   }
@@ -50,7 +50,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     } catch (error) {
       throw new RpcException({
         message: 'Error finding all products: ' + error.message,
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: error?.error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
       });
     }
   }
@@ -73,9 +73,10 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
 
       return product;
     } catch (error) {
+      console.log({ a: error });
       throw new RpcException({
         message: 'Error finding one product: ' + error.message,
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: error?.error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
       });
     }
   }
@@ -100,7 +101,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     } catch (error) {
       throw new RpcException({
         message: 'Error updating product: ' + error.message,
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: error?.error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
       });
     }
   }
@@ -109,16 +110,17 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
     try {
       await this.findOne(id);
 
-      return await this.product.update({
+      const products = await this.product.update({
         where: {
           id,
         },
         data: { available: false },
       });
+      return products;
     } catch (error) {
       throw new RpcException({
         message: 'Error removing product: ' + error.message,
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        status: error?.error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
       });
     }
   }
