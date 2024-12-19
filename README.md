@@ -11,11 +11,12 @@ This microservice is built using NestJS, a progressive Node.js framework, and in
 ### Main Dependencies
 
 - **NestJS v10** (`@nestjs/common`, `@nestjs/core`) - Main framework
-- **Prisma** (`@prisma/client`) - ORM for database operations
+- **Prisma** (`@prisma/client`) - ORM for database operations with SQLite
 - **Class Validator & Transformer** - For DTO validation and transformation
 - **Microservices Support** (`@nestjs/microservices`) - For microservice communication
 - **Environment Configuration** (`dotenv`) - For environment variables management
 - **Joi** - For schema validation
+- **rcpexceptions** - For handling RPC exceptions
 
 ### Development Dependencies
 
@@ -58,7 +59,7 @@ $ npm run test:cov
 
 ## Database
 
-This project uses Prisma as ORM. To work with the database:
+This project uses Prisma as ORM with SQLite. To work with the database:
 
 ```bash
 # Generate Prisma Client
